@@ -1,17 +1,29 @@
 package main
 
 import (
+	"io"
+	"os"
 	"testing"
 )
 
-func BenchmarkHashFile100(b *testing.B) {
+func open(filename string) io.Reader {
+	file, err := os.Open(filename)
+	if err != nil {
+		panic(err)
+	}
+	return file
+}
+
+func BenchmarkHashFileLegacy(b *testing.B) {
 	for n := 0; n < b.N; n++ {
-		hashFile("test.mp4")
+		file := open("test.mp4")
+		hashFileOld(file)
 	}
 }
 
-func BenchmarkHashFileOld100(b *testing.B) {
+func BenchmarkHashFile(b *testing.B) {
 	for n := 0; n < b.N; n++ {
-		hashFileOld("test.mp4")
+		file := open("test.mp4")
+		hashFile(file)
 	}
 }
