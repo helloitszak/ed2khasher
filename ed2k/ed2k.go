@@ -3,41 +3,57 @@ package ed2k
 import (
 	"bufio"
 	"encoding/hex"
-	md4 "golang.org/x/crypto/md4"
+	"golang.org/x/crypto/md4"
 	"io"
 )
 
 var BLOCK_SIZE int = 9500 * 1024
 
-func Hash(reader io.Reader) (string, error) {
+func Hash(rd io.Reader) (string, error) {
+	reader := bufio.NewReader(rd)
+
 	buffer := make([]byte, BLOCK_SIZE)
 
-	var blocks []byte
-
 	hasher := md4.New()
-	writer := bufio.NewWriter(hasher)
-	for {
+
+	inner  := md4.New()
+
+	last, err := reader.Read(buffer)
+	if err != nil && err != io.EOF {
+		return "", err
+	}
+
+	if last > 0 {
+		hasher.Write(buffer[:last])
+		inner.Write(hasher.Sum(nil))
 		hasher.Reset()
+	}
+
+	if last < BLOCK_SIZE {
+		return hex.EncodeToString(inner.Sum(nil)), nil
+	}
+
+	for {
 		count, err := reader.Read(buffer)
 		if count > 0 {
-			writer.Write(buffer[:count])
-			writer.Flush()
-			blocks = hasher.Sum(blocks)
+			hasher.Write(buffer[:count])
+			inner.Write(hasher.Sum(nil))
+			hasher.Reset()
 		}
 
+
 		if err == io.EOF {
-			break
+			if last == BLOCK_SIZE {
+				inner.Write(hasher.Sum(nil))
+				hasher.Reset()
+			}
+			break;
 		} else if err != nil {
 			return "", err
 		}
+
+		last = count
 	}
 
-	if len(blocks) > 16 {
-		hasher.Reset()
-		writer.Write(blocks)
-		writer.Flush()
-		blocks = hasher.Sum(nil)
-	}
-
-	return hex.EncodeToString(blocks), nil
+	return hex.EncodeToString(inner.Sum(nil)), nil
 }
