@@ -10,7 +10,7 @@ import (
 var BLOCK_SIZE int = 9500 * 1024
 
 func Hash(rd io.Reader) (string, error) {
-	reader := bufio.NewReader(rd)
+	reader := bufio.NewReaderSize(rd, BLOCK_SIZE)
 
 	buffer := make([]byte, BLOCK_SIZE)
 
