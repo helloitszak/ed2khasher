@@ -17,7 +17,7 @@ func usage() {
 	os.Exit(2)
 }
 
-func hashFile(filename string) {
+func hashFile(filename string) string {
 	file, err := os.Open(filename)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error reading file %s", file)
@@ -37,7 +37,34 @@ func hashFile(filename string) {
 		os.Exit(1)
 	}
 
-	fmt.Printf("ed2k://|file|%s|%d|%s|\n", path.Base(filename), stat.Size(), str)
+	return fmt.Sprintf("ed2k://|file|%s|%d|%s|\n", path.Base(filename), stat.Size(), str)
+}
+
+func hashFileOld(filename string) string {
+	file, err := os.Open(filename)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error reading file %s", file)
+		os.Exit(1)
+	}
+	defer file.Close()
+
+	stat, err := file.Stat()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "couldn't stat %s (%s)", filename, err)
+		os.Exit(1)
+	}
+
+	str, err := ed2k.HashOld(file)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error hashing %s (%s)", filename, err)
+		os.Exit(1)
+	}
+
+	return fmt.Sprintf("ed2k://|file|%s|%d|%s|\n", path.Base(filename), stat.Size(), str)
+}
+
+func pipe(filename string) {
+	fmt.Printf(hashFile(filename))
 	wait.Done()
 }
 
@@ -53,7 +80,7 @@ func main() {
 
 	wait.Add(len(args))
 	for _, file := range args {
-		go hashFile(file)
+		go pipe(file)
 	}
 	wait.Wait()
 }
