@@ -49,3 +49,84 @@ func TestLargeFile(t *testing.T) {
 func TestLargeFileOld(t *testing.T) {
 	HashWrapper(t, 19457000, "345da2ffa0f63eae5638b908f187bfb1", true)
 }
+
+func HashWrapperBench(b *testing.B, size int, old bool, parallel bool) {
+	test := bytes.NewReader(make([]byte, size))
+	if(parallel) {
+		b.ResetTimer()
+		b.RunParallel(func(pb *testing.PB) {
+			for pb.Next() {
+				Hash(test, old)	
+			}
+		})
+		return
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		Hash(test, old)
+	}
+}
+
+func BenchSmallFile(b *testing.B) {
+	HashWrapperBench(b, 600, false, false)
+}
+
+func BenchSmallFileOld(b *testing.B) {
+	HashWrapperBench(b, 600, true, false)
+}
+
+func BenchSmallFileParallel(b *testing.B) {
+	HashWrapperBench(b, 600, false, true)
+}
+
+func BenchSmallFileOldParallel(b *testing.B) {
+	HashWrapperBench(b, 600, true, true)
+}
+
+func BenchEqualFile(b *testing.B) {
+	HashWrapperBench(b, 9728000, false, false)
+}
+
+func BenchEqualFileOld(b *testing.B) {
+	HashWrapperBench(b, 9728000, true, false)
+}
+
+func BenchEqualFileParallel(b *testing.B) {
+	HashWrapperBench(b, 9728000, false, true)
+}
+
+func BenchEqualFileOldParallel(b *testing.B) {
+	HashWrapperBench(b, 9728000, true, true)
+}
+
+func BenchMultipleFile(b *testing.B) {
+	HashWrapperBench(b, 19456000, false, false)
+}
+
+func BenchMultipleFileOld(b *testing.B) {
+	HashWrapperBench(b, 19456000, true, false)
+}
+
+func BenchMultipleFileParallel(b *testing.B) {
+	HashWrapperBench(b, 19456000, false, true)
+}
+
+func BenchMultipleFileOldParallel(b *testing.B) {
+	HashWrapperBench(b, 19456000, true, true)
+}
+
+func BenchLargeFile(b *testing.B) {
+	HashWrapperBench(b, 19457000, false, false)
+}
+
+func BenchLargeFileOld(b *testing.B) {
+	HashWrapperBench(b, 19457000, true, false)
+}
+
+func BenchLargeFileParallel(b *testing.B) {
+	HashWrapperBench(b, 19457000, false, true)
+}
+
+func BenchLargeFileOldParallel(b *testing.B) {
+	HashWrapperBench(b, 19457000, true, true)
+}
