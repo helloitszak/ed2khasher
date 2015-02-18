@@ -67,66 +67,66 @@ func HashWrapperBench(b *testing.B, size int, old bool, parallel bool) {
 	}
 }
 
-func BenchSmallFile(b *testing.B) {
+func BenchmarkSmallFile(b *testing.B) {
 	HashWrapperBench(b, 600, false, false)
 }
 
-func BenchSmallFileOld(b *testing.B) {
+func BenchmarkSmallFileOld(b *testing.B) {
 	HashWrapperBench(b, 600, true, false)
 }
 
-func BenchSmallFileParallel(b *testing.B) {
+func BenchmarkSmallFileParallel(b *testing.B) {
 	HashWrapperBench(b, 600, false, true)
 }
 
-func BenchSmallFileOldParallel(b *testing.B) {
+func BenchmarkSmallFileOldParallel(b *testing.B) {
 	HashWrapperBench(b, 600, true, true)
 }
 
-func BenchEqualFile(b *testing.B) {
+func BenchmarkEqualFile(b *testing.B) {
 	HashWrapperBench(b, 9728000, false, false)
 }
 
-func BenchEqualFileOld(b *testing.B) {
+func BenchmarkEqualFileOld(b *testing.B) {
 	HashWrapperBench(b, 9728000, true, false)
 }
 
-func BenchEqualFileParallel(b *testing.B) {
+func BenchmarkEqualFileParallel(b *testing.B) {
 	HashWrapperBench(b, 9728000, false, true)
 }
 
-func BenchEqualFileOldParallel(b *testing.B) {
+func BenchmarkEqualFileOldParallel(b *testing.B) {
 	HashWrapperBench(b, 9728000, true, true)
 }
 
-func BenchMultipleFile(b *testing.B) {
+func BenchmarkMultipleFile(b *testing.B) {
 	HashWrapperBench(b, 19456000, false, false)
 }
 
-func BenchMultipleFileOld(b *testing.B) {
+func BenchmarkMultipleFileOld(b *testing.B) {
 	HashWrapperBench(b, 19456000, true, false)
 }
 
-func BenchMultipleFileParallel(b *testing.B) {
+func BenchmarkMultipleFileParallel(b *testing.B) {
 	HashWrapperBench(b, 19456000, false, true)
 }
 
-func BenchMultipleFileOldParallel(b *testing.B) {
+func BenchmarkMultipleFileOldParallel(b *testing.B) {
 	HashWrapperBench(b, 19456000, true, true)
 }
 
-func BenchLargeFile(b *testing.B) {
+func BenchmarkLargeFile(b *testing.B) {
 	HashWrapperBench(b, 19457000, false, false)
 }
 
-func BenchLargeFileOld(b *testing.B) {
+func BenchmarkLargeFileOld(b *testing.B) {
 	HashWrapperBench(b, 19457000, true, false)
 }
 
-func BenchLargeFileParallel(b *testing.B) {
+func BenchmarkLargeFileParallel(b *testing.B) {
 	HashWrapperBench(b, 19457000, false, true)
 }
 
-func BenchLargeFileOldParallel(b *testing.B) {
+func BenchmarkLargeFileOldParallel(b *testing.B) {
 	HashWrapperBench(b, 19457000, true, true)
 }
