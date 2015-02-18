@@ -12,30 +12,16 @@ import (
 )
 
 var wait sync.WaitGroup
-
-func usage() {
-	log.Print("usage: ed2khasher --pure [files]\n")
-	flag.PrintDefaults()
-	os.Exit(42)
-}
+var pure bool
+var old bool
 
 func hashFile(file io.Reader) (string, error) {
-	str, err := ed2k.Hash(file)
+	str, err := ed2k.Hash(file, old)
 	if err != nil {
 		return "", err
 	}
 	return str, nil
 }
-
-func hashFileOld(file io.Reader) (string, error) {
-	str, err := ed2k.HashOld(file)
-	if err != nil {
-		return "", err
-	}
-	return str, nil
-}
-
-var pure bool
 
 func pipe(filename string) {
 	file, err := os.Open(filename)
@@ -62,8 +48,15 @@ func pipe(filename string) {
 	wait.Done()
 }
 
+func usage() {
+	log.Print("usage: ed2khasher --pure [files]\n")
+	flag.PrintDefaults()
+	os.Exit(42)
+}
+
 func main() {
 	flag.BoolVar(&pure, "pure", false, "Only print ED2K Hash")
+	flag.BoolVar(&old, "old", false, "Use old method of ed2k hashing")
 	flag.Usage = usage
 	flag.Parse()
 
