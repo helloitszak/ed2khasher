@@ -52,7 +52,7 @@ func TestLargeFileOld(t *testing.T) {
 
 func HashWrapperBench(b *testing.B, size int, old bool, parallel bool) {
 	test := bytes.NewReader(make([]byte, size))
-	if(parallel) {
+	if parallel {
 		b.ResetTimer()
 		b.RunParallel(func(pb *testing.PB) {
 			for pb.Next() {
