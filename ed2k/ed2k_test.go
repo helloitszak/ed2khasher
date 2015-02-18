@@ -10,11 +10,11 @@ func HashWrapper(t *testing.T, size int, hash string, old bool) {
 	testHash, err := Hash(test, old)
 	
 	if err != nil {
-		t.Error("Got error ", err)
+		t.Fatalf("Got error %s", err)
 	}
 	
 	if testHash != hash {
-		t.Error("Expected ", hash, " got ", testHash)
+		t.Errorf("Expected %s got %s", hash, testHash)
 	}
 }
 
