@@ -14,6 +14,7 @@ import (
 var wait sync.WaitGroup
 var pure bool
 var old bool
+var anchor bool
 
 func hashFile(file io.Reader) (string, error) {
 	str, err := ed2k.Hash(file, old)
@@ -40,7 +41,11 @@ func pipe(filename string) {
 		if err != nil {
 			log.Fatalf("couldn't stat %s (%s)", filename, err)
 		}
-		str = fmt.Sprintf("ed2k://|file|%s|%d|%s|", path.Base(filename), stat.Size(), str)
+		basename := path.Base(filename)
+		str = fmt.Sprintf("ed2k://|file|%s|%d|%s|", basename, stat.Size(), str)
+		if anchor {
+			str = fmt.Sprintf("<a href=\"%s\">%s</a>", str, basename)
+		}
 	}
 
 	fmt.Println(str)
@@ -49,7 +54,7 @@ func pipe(filename string) {
 }
 
 func usage() {
-	log.Print("usage: ed2khasher --pure [files]\n")
+	log.Print("usage: ed2khasher [options] [files]\n")
 	flag.PrintDefaults()
 	os.Exit(42)
 }
@@ -57,6 +62,7 @@ func usage() {
 func main() {
 	flag.BoolVar(&pure, "pure", false, "Only print ED2K Hash")
 	flag.BoolVar(&old, "old", false, "Use old method of ed2k hashing")
+	flag.BoolVar(&anchor, "anchor", false, "Wrap HTML Link around ED2K Link")
 	flag.Usage = usage
 	flag.Parse()
 
