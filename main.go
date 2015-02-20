@@ -8,14 +8,10 @@ import (
 	"log"
 	"os"
 	"path"
-	"sync"
+	"runtime"
 )
 
-var wait sync.WaitGroup
-var pure bool
-var old bool
-
-func hashFile(file io.Reader) (string, error) {
+func hashFile(file io.Reader, old bool) (string, error) {
 	str, err := ed2k.Hash(file, old)
 	if err != nil {
 		return "", err
@@ -23,14 +19,14 @@ func hashFile(file io.Reader) (string, error) {
 	return str, nil
 }
 
-func pipe(filename string) {
+func pipe(filename string, pure bool, old bool) {
 	file, err := os.Open(filename)
 	if err != nil {
 		log.Fatalf("error reading file %s", file)
 	}
 	defer file.Close()
 
-	str, err := hashFile(file)
+	str, err := hashFile(file, old)
 	if err != nil {
 		log.Fatalf("error hashing %s (%s)", filename, err)
 	}
@@ -44,8 +40,6 @@ func pipe(filename string) {
 	}
 
 	fmt.Println(str)
-
-	wait.Done()
 }
 
 func usage() {
@@ -55,6 +49,10 @@ func usage() {
 }
 
 func main() {
+	runtime.GOMAXPROCS(runtime.NumCPU())
+
+	var pure bool
+	var old bool
 	flag.BoolVar(&pure, "pure", false, "Only print ED2K Hash")
 	flag.BoolVar(&old, "old", false, "Use old method of ed2k hashing")
 	flag.Usage = usage
@@ -65,9 +63,7 @@ func main() {
 		log.Fatal("Input file missing")
 	}
 
-	wait.Add(len(args))
 	for _, file := range args {
-		go pipe(file)
+		pipe(file, pure, old)
 	}
-	wait.Wait()
 }

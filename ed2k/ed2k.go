@@ -4,42 +4,111 @@ import (
 	"encoding/hex"
 	"golang.org/x/crypto/md4"
 	"io"
+	"log"
+	"runtime"
+	"sync"
 )
 
 const BLOCK_SIZE int = 9500 * 1024
 
-func Hash(reader io.Reader, oldMethod bool) (string, error) {
-	buffer := make([]byte, BLOCK_SIZE)
-	blocks := make([]byte, 0)
-	hasher := md4.New()
-	totalBytes := 0
+type Chunk struct {
+	bytes    []byte
+	position int
+	hash     []byte
+}
 
-	for {
+type CorrelatedChunks struct {
+	chunkMap   ChunkMap
+	totalBytes int
+}
+
+type ChunkMap map[int][]byte
+
+func readChunksToChannel(reader io.Reader, channel chan Chunk) {
+	for chunkCount := 0; ; chunkCount++ {
+		buffer := make([]byte, BLOCK_SIZE)
 		count, err := reader.Read(buffer)
-		totalBytes += count
-
 		if err == io.EOF {
+			close(channel)
 			break
 		} else if err != nil {
-			return "", err
+			log.Fatalf("error reading %s", err)
 		} else if count > 0 {
-			hasher.Reset()
-			hasher.Write(buffer[:count])
-			blocks = hasher.Sum(blocks)
+			channel <- Chunk{bytes: buffer[:count], position: chunkCount}
 		}
 	}
+}
 
-	if totalBytes%BLOCK_SIZE == 0 && oldMethod == true {
+func correlateChunksToMap(channel <-chan Chunk, chunkMap chan<- CorrelatedChunks) {
+	correlatedChunks := CorrelatedChunks{chunkMap: make(ChunkMap), totalBytes: 0}
+	for {
+		chunk, ok := <-channel
+		if !ok {
+			chunkMap <- correlatedChunks
+			return
+		}
+
+		correlatedChunks.chunkMap[chunk.position] = chunk.hash
+		correlatedChunks.totalBytes += len(chunk.bytes)
+	}
+}
+
+func hashChunks(input <-chan Chunk, output chan<- Chunk, wg *sync.WaitGroup) {
+	defer wg.Done()
+	hasher := md4.New()
+	for {
+		chunk, ok := <-input
+		if !ok {
+			return
+		}
+
+		hasher.Reset()
+		hasher.Write(chunk.bytes)
+		chunk.hash = hasher.Sum(nil)
+		output <- chunk
+	}
+}
+
+func Hash(reader io.Reader, oldMethod bool) (string, error) {
+	chunks := make(chan Chunk, 50)
+	hashes := make(chan Chunk, 50)
+
+	go readChunksToChannel(reader, chunks)
+
+	var wg sync.WaitGroup
+	for i := 0; i < runtime.NumCPU(); i++ {
+		wg.Add(1)
+		go hashChunks(chunks, hashes, &wg)
+	}
+
+	processedChan := make(chan CorrelatedChunks)
+	go correlateChunksToMap(hashes, processedChan)
+	wg.Wait()
+	close(hashes)
+
+	correlatedChunks := <-processedChan
+	hashList := make([]byte, 16*len(correlatedChunks.chunkMap))
+
+	for position, hash := range correlatedChunks.chunkMap {
+		copy(hashList[position*16:(position+1)*16], hash)
+	}
+
+	hasher := md4.New()
+	if correlatedChunks.totalBytes%BLOCK_SIZE == 0 && oldMethod == true {
 		hasher.Reset()
 		hasher.Write([]byte{})
-		blocks = hasher.Sum(blocks)
+		hashList = hasher.Sum(hashList)
 	}
 
-	if len(blocks) > 16 {
+	var finalSum []byte
+	if len(hashList) > 16 {
 		hasher.Reset()
-		hasher.Write(blocks)
-		blocks = hasher.Sum(nil)
+		hasher.Write(hashList)
+		finalSum = hasher.Sum(nil)
+	} else {
+		finalSum = hashList
 	}
 
-	return hex.EncodeToString(blocks), nil
+	return hex.EncodeToString(finalSum), nil
+
 }
